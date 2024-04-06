@@ -1,0 +1,91 @@
+// Contrato inteligente
+
+contract Shotermath {
+
+  // Eventos
+  event GameStarted(address player1, address player2);
+  event TurnTaken(address player, int action);
+  event GameOver(address winner);
+
+  // Variáveis
+  address player1;
+  address player2;
+  int player1Points;
+  int player2Points;
+  int currentTurn;
+  bool gameStarted;
+
+  // Funções
+  function startGame() public {
+    require(!gameStarted, "Game already started");
+
+    player1 = msg.sender;
+    player2 = tx.origin;
+    player1Points = 10;
+    player2Points = 10;
+    currentTurn = 1;
+    gameStarted = true;
+
+    emit GameStarted(player1, player2);
+  }
+
+  function takeTurn(int action) public {
+    require(gameStarted, "Game not started");
+    require(msg.sender == player1 || msg.sender == player2, "Not your turn");
+    require(action == 1 || action == 2, "Invalid action");
+
+    if (msg.sender == player1) {
+      require(currentTurn == 1, "Not your turn");
+      player1Points += 3;
+    } else {
+      require(currentTurn == 2, "Not your turn");
+      player2Points -= 3;
+    }
+
+    currentTurn = 3 - currentTurn;
+
+    emit TurnTaken(msg.sender, action);
+
+    if (player1Points <= 0 || player2Points <= 0) {
+      endGame();
+    }
+  }
+
+  function endGame() private {
+    address winner;
+
+    if (player1Points > player2Points) {
+      winner = player1;
+    } else {
+      winner = player2;
+    }
+
+    gameStarted = false;
+
+    emit GameOver(winner);
+  }
+
+  function getPoints(address player) public view returns (int) {
+    if (player == player1) {
+      return player1Points;
+    } else {
+      return player2Points;
+    }
+  }
+
+  function getTurn() public view returns (int) {
+    return currentTurn;
+  }
+
+  function isGameOver() public view returns (bool) {
+    return !gameStarted;
+  }
+
+  function getWinner() public view returns (address) {
+    if (player1Points > player2Points) {
+      return player1;
+    } else {
+      return player2;
+    }
+  }
+}
